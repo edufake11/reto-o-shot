@@ -1,0 +1,341 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Reto o Shot</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Figtree:wght@400;600;700&display=swap">
+<style>
+/* Layout: una sola columna centrada tipo carta de juego; fondo vino oscuro, acento ámbar de vela */
+:root{
+  --bg:#1a0b12; --surface:#2a1220; --line:#4a2236; --fg:#f6e9ee; --muted:#c4a3b2;
+  --accent:#ffb347; --hot:#ff4f7b;
+  --l1:#f7a3c0; --l2:#ff7a59; --l3:#ff3d6e; --l4:#c22bff;
+  --display:"Unbounded",system-ui,sans-serif; --body:"Figtree",system-ui,sans-serif;
+  color-scheme:dark;
+}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--body);font-size:16px;line-height:1.5;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px;
+  background:radial-gradient(ellipse at 50% -10%,#4a1430 0%,var(--bg) 60%) var(--bg) fixed}
+.wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,9vw,2.8rem);line-height:1;margin:0;letter-spacing:-.02em;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.sub{color:var(--muted);margin:6px 0 0}
+.label{font-size:.75rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:700;margin-bottom:8px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px}
+.row{display:flex;gap:8px}
+input[type=text]{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);color:var(--fg);border-radius:12px;padding:12px 14px;font:inherit}
+input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}
+button{font:inherit;cursor:pointer;border:0;border-radius:12px;color:var(--fg)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{background:var(--accent);color:#2a1004;font-weight:700;padding:12px 18px}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--fg)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 14px;display:flex;align-items:center;gap:6px;font-weight:600}
+.chip button{background:var(--line);width:24px;height:24px;border-radius:50%;font-size:.9rem;line-height:1}
+.hint{font-size:.85rem;color:var(--muted);margin:10px 0 0}
+.levels{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lvl{background:var(--bg);border:2px solid var(--line);padding:14px 12px;text-align:left;display:flex;flex-direction:column;gap:2px}
+.lvl b{font-family:var(--display);font-size:1rem}
+.lvl span{font-size:.8rem;color:var(--muted)}
+.lvl .heat{letter-spacing:2px;font-size:.8rem}
+.lvl[aria-pressed=true]{border-color:var(--c);background:color-mix(in srgb,var(--c) 18%,var(--bg))}
+.start{width:100%;padding:16px;font-size:1.1rem;font-family:var(--display)}
+.start:disabled{opacity:.4;cursor:not-allowed}
+/* juego */
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.pill{border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.85rem;background:var(--surface)}
+.pill b{color:var(--c)}
+.card{position:relative;background:var(--surface);border:2px solid var(--c);border-radius:24px;padding:28px 22px 24px;min-height:260px;display:flex;flex-direction:column;gap:16px;box-shadow:0 20px 50px -20px color-mix(in srgb,var(--c) 60%,transparent)}
+.turn{font-size:.8rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);font-weight:700}
+.who{font-family:var(--display);font-size:clamp(1.8rem,8vw,2.4rem);line-height:1.05;color:var(--c);overflow-wrap:anywhere}
+.text{font-size:1.25rem;line-height:1.45;font-weight:600;text-wrap:pretty}
+.text mark{background:none;color:var(--accent);font-weight:800}
+.num{position:absolute;top:16px;right:18px;font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions .btn{padding:16px;font-size:1.05rem}
+.shot{background:var(--hot);color:#fff;font-family:var(--display);font-weight:800}
+.score{display:flex;flex-direction:column;gap:6px}
+.score div{display:flex;justify-content:space-between;font-variant-numeric:tabular-nums;padding:6px 0;border-bottom:1px solid var(--line)}
+.score div:last-child{border-bottom:0}
+.flash{animation:pop .35s ease}
+@keyframes pop{from{transform:scale(.97);opacity:.6}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.flash{animation:none}}
+.lvlbar{display:flex;gap:6px;flex-wrap:wrap}
+.lvlbar button{background:var(--surface);border:1px solid var(--line);padding:6px 12px;border-radius:999px;font-size:.85rem}
+.lvlbar button[aria-pressed=true]{border-color:var(--c);color:var(--c);font-weight:700}
+.rules{font-size:.9rem;color:var(--muted)}
+.rules p{margin:0 0 6px}
+</style>
+</head><body>
+
+<div class="wrap">
+  <section id="setup">
+    <header style="margin-bottom:20px">
+      <h1>Reto <em>o</em> Shot</h1>
+      <p class="sub">Escribe los nombres en el orden en que están sentados. Si no quieres hacer un reto, dices "¡Shot!" y bebes.</p>
+    </header>
+    <div class="wrap" style="gap:16px">
+      <div class="panel">
+        <div class="label">Jugadores (en orden de asiento)</div>
+        <form id="addForm" class="row">
+          <input type="text" id="nameInput" placeholder="Nombre" maxlength="20" autocomplete="off">
+          <button class="btn" type="submit">Añadir</button>
+        </form>
+        <div class="chips" id="chips"></div>
+        <p class="hint" id="hint"></p>
+      </div>
+      <div class="panel">
+        <div class="label">Nivel</div>
+        <div class="levels" id="levels"></div>
+      </div>
+      <button class="btn start" id="startBtn">Empezar</button>
+      <div class="panel rules">
+        <div class="label">Reglas</div>
+        <p>El de tu derecha es el siguiente jugador de la lista.</p>
+        <p>Cualquiera puede pasar diciendo "¡Shot!", también la persona elegida para el reto.</p>
+        <p>Antes de empezar, que cada uno diga sus límites.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="game" hidden>
+    <div class="top">
+      <button class="btn ghost" id="backBtn" type="button">← Jugadores</button>
+      <span class="pill" id="levelPill"></span>
+    </div>
+    <div class="lvlbar" id="lvlbar" style="margin-top:14px"></div>
+    <article class="card" id="card" style="margin-top:14px">
+      <span class="num" id="num"></span>
+      <div>
+        <div class="turn">Turno de</div>
+        <div class="who" id="who"></div>
+      </div>
+      <div class="text" id="text"></div>
+    </article>
+    <div class="actions" style="margin-top:14px">
+      <button class="btn" id="doneBtn" type="button">Reto hecho</button>
+      <button class="btn shot" id="shotBtn" type="button">¡Shot! 🥃</button>
+    </div>
+    <div class="panel" style="margin-top:20px">
+      <div class="label">Marcador</div>
+      <div class="score" id="score"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const LEVELS=[
+{name:"Suave",heat:"🔥",desc:"Para romper el hielo",c:"var(--l1)",r:[
+"Susurra al oído de {A} lo que más te atrae de su persona.",
+"Da un beso en la mejilla a quien elija {D}.",
+"Quítate un accesorio o una prenda pequeña (zapato, reloj, collar).",
+"Cuenta tu primer beso con detalles.",
+"Haz un baile sensual de 30 segundos en el centro.",
+"Di en voz alta quién del grupo te parece más atractivo.",
+"Dale un abrazo de 15 segundos a {A}.",
+"Da un masaje de manos de 1 minuto a quien elija {D}.",
+"Mira a los ojos a {A} durante 20 segundos sin reírte.",
+"Cuenta el lugar más raro donde te has besado con alguien.",
+"Coquetea con {A} usando tu mejor frase para ligar.",
+"Imita cómo intentas seducir a alguien en una discoteca.",
+"Siéntate al lado de {A} hasta tu próximo turno.",
+"{D} te hace una pregunta picante y respondes con la verdad.",
+"Di qué parte del cuerpo te parece más sexy en otra persona.",
+"Da un beso en la mano a quien elija {D}.",
+"Pon tu cara más seductora durante 10 segundos sin reírte.",
+"Cuenta tu cita más desastrosa.",
+"Deja que {A} te despeine como quiera.",
+"Juega la siguiente ronda con los ojos vendados.",
+"Dale un piropo original a cada persona del grupo.",
+"Cuenta qué es lo primero en que te fijas de alguien.",
+"Baila lento con quien elija {D} durante 30 segundos.",
+"Di con quién tendrías una cita esta noche (puede ser del grupo).",
+"Da un masaje de hombros de 1 minuto a {A}.",
+"Confiesa tu mayor manía en el amor.",
+"Dale un beso en la frente a quien elija {D}.",
+"Cuenta un sueño raro que hayas tenido con alguien conocido.",
+"Cambia una prenda con {A} hasta el final de la ronda.",
+"Describe tu cita ideal en tres palabras.",
+"Deja que {D} te escriba algo en el brazo con un bolígrafo.",
+"Di tres cosas que te parecen sexis de {A}.",
+"Haz una pasarela sensual de ida y vuelta.",
+"Cuenta el mensaje más atrevido que hayas enviado.",
+"Entrelaza tus manos con quien elija {D} hasta tu próximo turno.",
+"Lame un poco de sal o azúcar de tu mano mirando fijamente a {A}.",
+"Di qué canción pondrías para un momento romántico.",
+"Di con quién del grupo harías un viaje a solas.",
+"Deja que {A} te dé un beso en la mejilla o el cuello, como prefiera.",
+"Dedica una frase romántica inventada a quien elija {D}."]},
+{name:"Picante",heat:"🔥🔥",desc:"Empieza el calor",c:"var(--l2)",r:[
+"Da un beso en el cuello de 10 segundos a quien elija {D}.",
+"Quítate una prenda.",
+"Cuéntale al oído a {A} tu fantasía más inocente.",
+"Haz un baile sensual de 1 minuto para {A}.",
+"Besa a alguien en la parte del cuerpo que elija {D} (por encima de la ropa).",
+"Muerde suavemente la oreja de {A}.",
+"Escribe con el dedo una palabra sexy en la espalda de {A} y que la adivine.",
+"Siéntate en las piernas de quien elija {D} durante dos rondas.",
+"Pasa un cubito de hielo por el cuello de {A}.",
+"Confiesa una fantasía que nunca hayas contado.",
+"Da un masaje de espalda de 2 minutos a quien elija {D}.",
+"Susurra a {A} lo que le harías si estuvierais a solas.",
+"Da un beso rápido en los labios a quien elija {D}.",
+"Haz un striptease lento de una prenda.",
+"Con los ojos vendados, adivina quién te acaricia la cara. {D} elige a la persona.",
+"Cuenta tu experiencia más atrevida.",
+"Recibe una nalgada de quien elija {D}.",
+"Bebe un sorbo de la copa de {A} mientras te la sostiene en la boca.",
+"Muestra cómo besas usando tu propia mano.",
+"Deja que {A} te quite una prenda.",
+"Acaricia el pelo de quien elija {D} mirándole a los ojos durante 30 segundos.",
+"Gime de forma exagerada durante 10 segundos.",
+"Di quién del grupo crees que besa mejor.",
+"Recorre con un dedo el brazo de {A}, de la muñeca al hombro, muy despacio.",
+"Haz un lap dance de 1 minuto a quien elija {D}.",
+"Quédate sin camiseta o blusa la siguiente ronda.",
+"Cuenta lo más atrevido que hayas hecho en público.",
+"Deja que {A} te muerda suavemente el hombro.",
+"Besa el cuello de {A} durante 5 segundos.",
+"Describe con detalle tu tipo de beso favorito.",
+"Representa una escena romántica de película con {A}.",
+"Deja que quien elija {D} te bese desde la mano hasta el codo.",
+"Enseña la última foto atrevida de tu móvil o di \"¡Shot!\".",
+"Di cuál es tu postura favorita.",
+"Dale un beso en la nuca a {A}.",
+"Abraza por la cintura desde atrás a quien elija {D} durante 30 segundos.",
+"Lame un poco de nata o azúcar del dedo de {A}.",
+"Dile a {A}, con tu voz más sexy, lo que más te gusta de su cuerpo.",
+"Intercambia una prenda con quien elija {D} ahí mismo.",
+"Deja que {A} te dé un beso donde quiera (por encima de la ropa)."]},
+{name:"Atrevido",heat:"🔥🔥🔥",desc:"Sin miedo",c:"var(--l3)",r:[
+"Quítale una prenda con los dientes a quien elija {D}.",
+"Recorre con besos la espalda de {A}.",
+"Quédate en ropa interior hasta el final de la partida.",
+"Deja que quien elija {D} te ate las manos suavemente durante 5 minutos.",
+"Ponte nata o chocolate en el cuello y que {A} la quite con la boca.",
+"Haz un lap dance de 2 minutos a quien elija {D}.",
+"Recrea un beso de película con {A}.",
+"{D} elige tres zonas del cuerpo de alguien para que las beses, en ese orden.",
+"Durante 3 minutos solo puedes usar la boca, no las manos.",
+"Guía las manos de {A} para enseñar cómo te gusta que te toquen.",
+"Gime el nombre de {A} en voz alta.",
+"Quítale una prenda con una sola mano a quien elija {D}.",
+"Pasa un cubito de hielo de tu boca a la de quien elija {D}.",
+"Besa el abdomen de {A} durante 30 segundos.",
+"Da un beso de 10 segundos a quien elija {D}.",
+"Con los ojos vendados, {A} te besa en tres sitios y debes adivinar cuáles.",
+"Recibe tres nalgadas de {A}.",
+"Bebe un shot del ombligo de quien elija {D}.",
+"Siéntate a horcajadas sobre {A} durante 1 minuto mirándole a los ojos.",
+"Quítate dos prendas.",
+"Con los ojos vendados, deja que {A} te bese el cuello.",
+"Muerde suavemente el labio de quien elija {D}.",
+"Cuenta tu mejor noche de pasión (sin decir nombres).",
+"Pon una fresa o un caramelo en tu boca y que {A} se la lleve con la suya.",
+"Da un masaje con crema o aceite de 2 minutos a quien elija {D}.",
+"Roza con los labios el cuello de {A} durante 20 segundos sin besarle.",
+"Deja que {A} te quite la camiseta o lo que lleves arriba.",
+"Recorre con un hielo la espalda de quien elija {D}.",
+"Susurra a {A} tu fantasía más atrevida.",
+"Besa desde la rodilla subiendo por el muslo de quien elija {D} (por encima de la ropa).",
+"Tienes 1 minuto para hacer suspirar a {A} solo con besos en el cuello.",
+"Da un beso apasionado de 20 segundos a quien elija {D}.",
+"Dibuja una letra con la lengua en el cuello de {A} y que la adivine.",
+"Haz con {A} la postura que elija {D} durante 20 segundos (con ropa).",
+"Pásale a {A} un trozo de fruta de tu boca a la suya.",
+"Deja que quien elija {D} te haga un chupetón donde no se vea.",
+"Juega tu próximo turno sentado o sentada en las piernas de {A}.",
+"Muestra con {A} tu mejor movimiento de seducción durante 30 segundos.",
+"Quítale una prenda a {A} sin usar las manos.",
+"{D} decide qué prenda te quitas y quién te la quita."]},
+{name:"Extremo",heat:"🔥🔥🔥🔥",desc:"Solo para valientes",c:"var(--l4)",r:[
+"Obedece las órdenes de {D} durante 5 minutos.",
+"Con los ojos vendados, déjate llevar 3 minutos por {A}.",
+"Usa con quien elija {D} un accesorio o juguete que nunca hayas probado.",
+"Haz la postura que elija {D} con la persona que él o ella decida.",
+"Recrea tu fantasía favorita con {A}.",
+"Seduce solo con palabras durante 2 minutos a quien elija {D}.",
+"Haz un juego de roles de 5 minutos con {A}. Tú eliges los personajes.",
+"Prohibido usar las manos el resto de la partida.",
+"Ve a otra habitación 5 minutos con quien elija {D}.",
+"Cumple el deseo que {D} escriba en secreto en un papel.",
+"Quítate todo lo que lleves de cintura para arriba.",
+"Da un beso de 1 minuto sin parar a quien elija {D}.",
+"Deja que {A} te recorra el cuerpo con un hielo durante 1 minuto.",
+"Lame nata del cuello y el pecho de quien elija {D}.",
+"Ata las manos de {A} y haz lo que quieras 2 minutos, dentro de sus límites.",
+"Da un masaje sensual de 3 minutos a {A} en la zona que elija.",
+"Beso a tres con {A} y la persona que elija {D}.",
+"Haz un striptease hasta la ropa interior para quien elija {D}.",
+"Ve 10 minutos a otra habitación con {A}.",
+"Deja que {A} te quite las prendas que quiera.",
+"Bebe un shot del cuello de quien elija {D}.",
+"Cuenta con todo detalle tu fantasía más prohibida.",
+"Durante dos rondas eres esclavo o esclava de {A}.",
+"Date una ducha de 5 minutos con quien elija {D}.",
+"Besa a {A} donde quiera, si lo acepta.",
+"Con los ojos vendados, {D} decide quién te besa y dónde.",
+"Siéntate en las piernas de {A} y bésale el cuello hasta que diga basta.",
+"Simula con {A} la postura que elija {D} durante 30 segundos.",
+"Pasa el resto de la partida pegado o pegada a quien elija {D}.",
+"Deja que {A} explore tu cuerpo con las manos durante 1 minuto, por encima de la ropa interior.",
+"Escribe tu nombre con la lengua en la espalda de quien elija {D}.",
+"Haz un lap dance en ropa interior para {A}.",
+"Juega a 7 minutos en el paraíso con quien elija {D}.",
+"Con los ojos vendados, {A} te da a probar tres cosas con su boca.",
+"Besa el abdomen de {A} bajando hasta la cintura.",
+"{D} dice dónde pones tu mano sobre {A} hasta tu próximo turno.",
+"Recrea con {A} una escena +18 de película, en ropa interior.",
+"Deja que quien elija {D} te haga un chupetón visible.",
+"Quítate la prenda de ropa interior que elija {D}.",
+"Dile al oído a la persona con quien te gustaría terminar la noche."]}
+];
+
+const $=id=>document.getElementById(id);
+let players=["Ana","Luis","Sofía","Diego"], level=0, turn=0, decks=[], count=[0,0,0,0], shots={}, done={};
+let sample=true;
+try{const s=JSON.parse(localStorage.getItem("retoShot")||"null");if(s&&Array.isArray(s.players)&&s.players.length){players=s.players;level=s.level||0;sample=false}}catch(e){}
+function save(){try{localStorage.setItem("retoShot",JSON.stringify({players,level}))}catch(e){}}
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+function renderChips(){
+  $("chips").innerHTML=players.map((p,i)=>`<span class="chip">${esc(p)}<button type="button" aria-label="Quitar ${esc(p)}" data-i="${i}">×</button></span>`).join("");
+  $("hint").textContent= sample?"Son nombres de ejemplo: quítalos y pon los de tus amigos.": players.length<2?"Añade al menos 2 jugadores.": `${players.length} jugadores. A la derecha de ${players[players.length-1]} está ${players[0]}.`;
+  $("startBtn").disabled=players.length<2;
+}
+$("chips").onclick=e=>{const b=e.target.closest("button");if(!b)return;players.splice(+b.dataset.i,1);sample=false;save();renderChips()};
+$("addForm").onsubmit=e=>{e.preventDefault();const v=$("nameInput").value.trim();if(!v)return;
+  if(sample){players=[];sample=false}
+  players.push(v);$("nameInput").value="";save();renderChips();$("nameInput").focus()};
+
+function renderLevels(){
+  $("levels").innerHTML=LEVELS.map((l,i)=>`<button type="button" class="lvl" style="--c:${l.c}" aria-pressed="${i===level}" data-i="${i}"><span class="heat">${l.heat}</span><b>${l.name}</b><span>${l.desc}</span></button>`).join("");
+  $("lvlbar").innerHTML=LEVELS.map((l,i)=>`<button type="button" style="--c:${l.c}" aria-pressed="${i===level}" data-i="${i}">${l.name}</button>`).join("");
+}
+function pickLevel(e){const b=e.target.closest("button");if(!b)return;level=+b.dataset.i;save();renderLevels();if(!$("game").hidden)draw()}
+$("levels").onclick=pickLevel;$("lvlbar").onclick=pickLevel;
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function nextCard(){if(!decks[level]||!decks[level].length){decks[level]=shuffle([...Array(40).keys()])}count[level]++;return decks[level].pop()}
+
+function draw(){
+  const n=players.length, J=players[turn%n], D=players[(turn+1)%n];
+  let others=players.filter((p,i)=>i!==turn%n&&i!==(turn+1)%n); if(!others.length)others=[D];
+  const A=others[Math.floor(Math.random()*others.length)];
+  const idx=nextCard(), L=LEVELS[level];
+  const html=esc(L.r[idx]).replace(/\{D\}/g,`<mark>${esc(D)}</mark>`).replace(/\{A\}/g,`<mark>${esc(A)}</mark>`);
+  const card=$("card");card.style.setProperty("--c",L.c);
+  $("who").textContent=J;$("text").innerHTML=html;
+  $("num").textContent=`${L.name} · ${((count[level]-1)%40)+1}/40`;
+  $("levelPill").style.setProperty("--c",L.c);$("levelPill").innerHTML=`Nivel <b>${L.name}</b> ${L.heat}`;
+  card.classList.remove("flash");void card.offsetWidth;card.classList.add("flash");
+}
+function renderScore(){
+  $("score").innerHTML=players.map(p=>`<div><span>${esc(p)}</span><span>✅ ${done[p]||0} · 🥃 ${shots[p]||0}</span></div>`).join("");
+}
+function advance(kind){const p=players[turn%players.length];(kind==="shot"?shots:done)[p]=((kind==="shot"?shots:done)[p]||0)+1;turn=(turn+1)%players.length;renderScore();draw()}
+$("doneBtn").onclick=()=>advance("done");
+$("shotBtn").onclick=()=>advance("shot");
+$("startBtn").onclick=()=>{if(players.length<2)return;turn=Math.floor(Math.random()*players.length);$("setup").hidden=true;$("game").hidden=false;renderLevels();renderScore();draw();window.scrollTo(0,0)};
+$("backBtn").onclick=()=>{$("game").hidden=true;$("setup").hidden=false;renderChips();renderLevels()};
+renderChips();renderLevels();
+</script>
+</body></html>
